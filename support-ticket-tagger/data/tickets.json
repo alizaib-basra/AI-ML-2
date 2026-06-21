@@ -1,0 +1,102 @@
+[
+  {
+    "id": "TKT-001",
+    "text": "My app keeps crashing every time I try to open it. I've reinstalled it three times but the problem persists. Running on iPhone 14 with iOS 17.",
+    "true_tags": ["Bug Report", "Mobile App", "Crash"]
+  },
+  {
+    "id": "TKT-002",
+    "text": "I was charged twice for my monthly subscription this billing cycle. Please refund the duplicate payment immediately.",
+    "true_tags": ["Billing", "Refund Request", "Duplicate Charge"]
+  },
+  {
+    "id": "TKT-003",
+    "text": "How do I export my data to a CSV file? I can't find the option in settings.",
+    "true_tags": ["How-To", "Data Export", "Settings"]
+  },
+  {
+    "id": "TKT-004",
+    "text": "I forgot my password and the reset email never arrives in my inbox. I've checked spam too.",
+    "true_tags": ["Account Access", "Password Reset", "Email Issue"]
+  },
+  {
+    "id": "TKT-005",
+    "text": "The dashboard is extremely slow to load. Takes over 30 seconds every time. My internet is fine.",
+    "true_tags": ["Performance", "Bug Report", "Dashboard"]
+  },
+  {
+    "id": "TKT-006",
+    "text": "I need to add 5 more seats to our enterprise plan for new team members joining next week.",
+    "true_tags": ["Billing", "Account Upgrade", "Enterprise"]
+  },
+  {
+    "id": "TKT-007",
+    "text": "The API keeps returning 500 errors when I try to create new records. My authentication token is valid.",
+    "true_tags": ["API Issue", "Bug Report", "Developer"]
+  },
+  {
+    "id": "TKT-008",
+    "text": "Can you integrate with Slack? We'd love to get notifications there instead of email.",
+    "true_tags": ["Feature Request", "Integration", "Notifications"]
+  },
+  {
+    "id": "TKT-009",
+    "text": "My account got locked after too many login attempts. I need it unlocked urgently for a client meeting.",
+    "true_tags": ["Account Access", "Account Locked", "Urgent"]
+  },
+  {
+    "id": "TKT-010",
+    "text": "The dark mode feature is great but text is barely readable in some menus. White text on light grey background.",
+    "true_tags": ["Bug Report", "UI/UX", "Dark Mode"]
+  },
+  {
+    "id": "TKT-011",
+    "text": "We need GDPR data deletion for a former employee. Please delete all their records within 72 hours.",
+    "true_tags": ["Compliance", "Data Deletion", "GDPR"]
+  },
+  {
+    "id": "TKT-012",
+    "text": "Notifications stopped working after the latest update. I'm not getting alerts for new messages.",
+    "true_tags": ["Bug Report", "Notifications", "Update Issue"]
+  },
+  {
+    "id": "TKT-013",
+    "text": "I'd like to downgrade from Pro to Basic plan at the end of my billing cycle. How do I do that?",
+    "true_tags": ["Billing", "Account Downgrade", "How-To"]
+  },
+  {
+    "id": "TKT-014",
+    "text": "Your documentation on webhooks is outdated. The endpoints listed no longer exist.",
+    "true_tags": ["Documentation", "Developer", "Webhook"]
+  },
+  {
+    "id": "TKT-015",
+    "text": "Files over 10MB won't upload. I get a generic error with no explanation. Need to upload 50MB reports.",
+    "true_tags": ["Bug Report", "File Upload", "Size Limit"]
+  },
+  {
+    "id": "TKT-016",
+    "text": "Can you add multi-language support? Our team is in Spain and Germany and they prefer native languages.",
+    "true_tags": ["Feature Request", "Localization", "Internationalization"]
+  },
+  {
+    "id": "TKT-017",
+    "text": "I accidentally deleted an important project. Is there any way to recover it or see a backup?",
+    "true_tags": ["Data Recovery", "Account Issue", "Urgent"]
+  },
+  {
+    "id": "TKT-018",
+    "text": "The two-factor authentication SMS never arrives. I've verified my phone number is correct.",
+    "true_tags": ["Account Access", "2FA", "SMS Issue"]
+  },
+  {
+    "id": "TKT-019",
+    "text": "Search results are completely wrong. Searching for 'project alpha' shows completely unrelated results.",
+    "true_tags": ["Bug Report", "Search", "Data Issue"]
+  },
+  {
+    "id": "TKT-020",
+    "text": "We're a non-profit. Do you offer any special pricing or discounts for organizations like ours?",
+    "true_tags": ["Billing", "Discount Request", "Non-Profit"]
+  }
+]

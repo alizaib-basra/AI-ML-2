@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support Ticket Auto-Tagger</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --border:   #30363d;
+    --accent:   #58a6ff;
+    --accent2:  #f78166;
+    --accent3:  #3fb950;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --zero:     #388bfd;
+    --few:      #f78166;
+    --radius:   10px;
+    --mono:     'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header .logo { font-size: 28px; }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(88,166,255,0.3);
+    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  .section { margin-top: 36px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── API Key Input ── */
+  .api-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .api-card label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .api-card input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .api-card input:focus { border-color: var(--accent); }
+  .api-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .api-status.ok  { background: rgba(63,185,80,.15); color: var(--accent3); border: 1px solid rgba(63,185,80,.3); }
+  .api-status.err { background: rgba(247,129,102,.15); color: var(--accent2); border: 1px solid rgba(247,129,102,.3); }
+
+  /* ── Ticket Input ── */
+  .ticket-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .ticket-area textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 18px 20px 12px;
+    resize: none;
+    outline: none;
+    height: 120px;
+  }
+  .ticket-area textarea::placeholder { color: var(--muted); }
+
+  .ticket-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    gap: 12px;
+  }
+  .preset-label { font-size: 12px; color: var(--muted); }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preset-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Run Button ── */
+  .run-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #0d1117;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    white-space: nowrap;
+    min-width: 160px;
+  }
+  .run-btn:hover { opacity: .88; }
+  .run-btn:active { transform: scale(.97); }
+  .run-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Strategy Tabs ── */
+  .strat-tabs { display: flex; gap: 0; }
+  .strat-tab {
+    padding: 7px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .strat-tab:first-child { border-radius: 8px 0 0 8px; }
+  .strat-tab:last-child  { border-radius: 0 8px 8px 0; border-left: none; }
+  .strat-tab.active[data-strat="zero"] { background: rgba(56,139,253,.15); color: var(--zero); border-color: rgba(56,139,253,.4); }
+  .strat-tab.active[data-strat="few"]  { background: rgba(247,129,102,.15); color: var(--few); border-color: rgba(247,129,102,.4); }
+  .strat-tab.active[data-strat="both"] { background: rgba(88,166,255,.15); color: var(--accent); border-color: rgba(88,166,255,.4); }
+
+  /* ── Results Grid ── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .results-grid.single { grid-template-columns: 1fr; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    animation: fadeUp .3s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .strategy-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .strategy-label.zero { background: rgba(56,139,253,.15); color: var(--zero); }
+  .strategy-label.few  { background: rgba(247,129,102,.15); color: var(--few); }
+
+  .latency-badge {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* ── Tag Items ── */
+  .tag-item { margin-bottom: 14px; }
+  .tag-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  .tag-rank {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    width: 22px;
+  }
+  .tag-name {
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .tag-name.rank-1 { color: var(--text); }
+  .tag-name.rank-2 { color: #c9d1d9; }
+  .tag-name.rank-3 { color: var(--muted); }
+  .tag-conf {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--muted);
+    width: 40px;
+    text-align: right;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+  .result-card.zero-card .progress-fill { background: var(--zero); }
+  .result-card.few-card  .progress-fill { background: var(--few); }
+
+  /* ── Reasoning ── */
+  .reasoning {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border-radius: 6px;
+    border-left: 3px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── Comparison Table ── */
+  .compare-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+    animation: fadeUp .4s ease;
+  }
+  .compare-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 16px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(48,54,61,.6); }
+  tr:last-child td { border-bottom: none; }
+  .match-yes { color: var(--accent3); font-weight: 700; }
+  .match-no  { color: var(--accent2); }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(13,17,23,.3);
+    border-top-color: #0d1117;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error ── */
+  .error-msg {
+    background: rgba(247,129,102,.1);
+    border: 1px solid rgba(247,129,102,.3);
+    color: var(--accent2);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 16px;
+  }
+
+  /* ── Placeholder ── */
+  .placeholder {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .placeholder .icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* ── True Tags ── */
+  .true-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .true-tag-label { font-size: 12px; color: var(--muted); }
+  .true-tag-chip {
+    font-size: 11px;
+    padding: 2px 10px;
+    background: rgba(63,185,80,.12);
+    color: var(--accent3);
+    border: 1px solid rgba(63,185,80,.25);
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .results-grid { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    .container { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏷️</div>
+  <div>
+    <h1>Support Ticket Auto-Tagger</h1>
+    <p>Zero-Shot vs Few-Shot LLM Classification · Top 3 Tags Ranked by Confidence</p>
+  </div>
+  <span class="badge">⚡ Claude Powered</span>
+</header>
+
+<div class="container">
+
+  <!-- API Key -->
+  <div class="section">
+    <div class="section-title">Configuration</div>
+    <div class="api-card">
+      <label>🔑 API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+      <span class="api-status" id="apiStatus">Not set</span>
+    </div>
+  </div>
+
+  <!-- Strategy selector + Ticket Input -->
+  <div class="section">
+    <div class="section-title">Input</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
+      <div class="strat-tabs">
+        <button class="strat-tab" data-strat="zero" onclick="setStrat('zero')">🔹 Zero-Shot</button>
+        <button class="strat-tab active" data-strat="both" onclick="setStrat('both')">⚖️ Compare Both</button>
+        <button class="strat-tab" data-strat="few" onclick="setStrat('few')">🔸 Few-Shot</button>
+      </div>
+      <button class="run-btn" id="runBtn" onclick="runTagger()">
+        <span>▶ Tag Ticket</span>
+      </button>
+    </div>
+
+    <div class="ticket-area">
+      <textarea id="ticketInput" placeholder="Paste or type a support ticket here…
+
+Example: My app keeps crashing every time I try to open it. I've reinstalled it three times. Running on iPhone 14 with iOS 17."></textarea>
+      <div class="ticket-footer">
+        <span class="preset-label">Quick presets →</span>
+        <div class="presets" id="presets"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="section">
+    <div class="section-title">Results</div>
+    <div id="results">
+      <div class="placeholder">
+        <div class="icon">🎯</div>
+        Enter a support ticket above and click <strong>Tag Ticket</strong> to see AI-powered classification.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Presets ─────────────────────────────────────────────────────────────
+const PRESETS = [
+  { label: "🐛 Crash",      text: "The app crashes immediately on launch after the latest update. I've tried reinstalling but it keeps happening on my Android phone." },
+  { label: "💳 Billing",    text: "I was charged twice for my subscription this month. Please refund the duplicate charge as soon as possible." },
+  { label: "🔐 Login",      text: "I can't log in. The password reset email never arrives even after multiple attempts. I've checked spam too." },
+  { label: "⚡ Slow",       text: "The dashboard takes 30+ seconds to load every time. My internet speed is fine — it's only your site that is slow." },
+  { label: "🚀 Feature",    text: "Could you add Slack integration? We'd love to receive notifications there instead of email." },
+  { label: "📋 GDPR",       text: "We need to delete all data for a former employee under GDPR. This must happen within 72 hours." },
+];
+
+const TICKET_TAGS = {
+  "The app crashes immediately on launch after the latest update. I've tried reinstalling but it keeps happening on my Android phone.": ["Bug Report", "Mobile App", "Crash"],
+  "I was charged twice for my subscription this month. Please refund the duplicate charge as soon as possible.": ["Billing", "Refund Request", "Duplicate Charge"],
+  "I can't log in. The password reset email never arrives even after multiple attempts. I've checked spam too.": ["Account Access", "Password Reset", "Email Issue"],
+  "The dashboard takes 30+ seconds to load every time. My internet speed is fine — it's only your site that is slow.": ["Performance", "Bug Report", "Dashboard"],
+  "Could you add Slack integration? We'd love to receive notifications there instead of email.": ["Feature Request", "Integration", "Notifications"],
+  "We need to delete all data for a former employee under GDPR. This must happen within 72 hours.": ["Compliance", "Data Deletion", "GDPR"],
+};
+
+let currentStrat = "both";
+
+const presetsEl = document.getElementById("presets");
+PRESETS.forEach(p => {
+  const btn = document.createElement("button");
+  btn.className = "preset-btn";
+  btn.textContent = p.label;
+  btn.onclick = () => { document.getElementById("ticketInput").value = p.text; };
+  presetsEl.appendChild(btn);
+});
+
+// ── Strategy toggle ──────────────────────────────────────────────────────
+function setStrat(s) {
+  currentStrat = s;
+  document.querySelectorAll(".strat-tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.strat === s);
+  });
+}
+
+// ── API Key status ───────────────────────────────────────────────────────
+const apiKeyEl = document.getElementById("apiKey");
+const apiStatusEl = document.getElementById("apiStatus");
+
+apiKeyEl.addEventListener("input", () => {
+  const v = apiKeyEl.value.trim();
+  apiStatusEl.textContent = v.startsWith("sk-ant") ? "✓ Looks valid" : (v ? "⚠ Check format" : "Not set");
+  apiStatusEl.className = "api-status " + (v.startsWith("sk-ant") ? "ok" : "err");
+});
+
+// ── Tagging call ─────────────────────────────────────────────────────────
+const ALL_TAGS = [
+  "Bug Report","Feature Request","Billing","Account Access","Performance","API Issue",
+  "UI/UX","How-To","Documentation","Data Recovery","Compliance","Integration","Mobile App",
+  "Notifications","Security","Crash","Refund Request","Account Upgrade","Account Downgrade",
+  "Data Export","File Upload","Search","Developer","Urgent","2FA","Password Reset",
+  "Email Issue","Dark Mode","Dashboard","GDPR","Localization","Webhook","Enterprise",
+  "Non-Profit","Duplicate Charge","SMS Issue","Update Issue","Discount Request","Data Issue",
+  "Data Deletion","Account Locked","Account Issue","Size Limit","Internationalization"
+];
+
+const FEW_SHOT = [
+  { ticket: "I can't log in. The password reset email never comes.", tags: ["Account Access","Password Reset","Email Issue"] },
+  { ticket: "Please cancel my subscription and refund my last payment.", tags: ["Billing","Refund Request","Account Downgrade"] },
+  { ticket: "The mobile app crashes immediately on Android 13 after the latest update.", tags: ["Bug Report","Mobile App","Crash"] },
+  { ticket: "How do I connect your service with Zapier?", tags: ["How-To","Integration","Feature Request"] },
+  { ticket: "The API rate limit docs are wrong — limits differ in production.", tags: ["Documentation","API Issue","Developer"] },
+];
+
+function buildZeroShotPrompt(ticket) {
+  return `You are an expert support ticket classification system.
+
+Analyze the support ticket and assign the TOP 3 most relevant tags from the provided taxonomy.
+
+AVAILABLE TAGS:
+${ALL_TAGS.join(", ")}
+
+INSTRUCTIONS:
+- Select exactly 3 tags ranked by relevance (most relevant first)
+- Output ONLY valid JSON, no extra text, no markdown fences
+
+OUTPUT FORMAT:
+{"tags":["Tag1","Tag2","Tag3"],"confidence":[0.95,0.80,0.65],"reasoning":"One sentence."}
+
+SUPPORT TICKET:
+"""${ticket}"""`;
+}
+
+function buildFewShotPrompt(ticket) {
+  const examples = FEW_SHOT.map((ex, i) =>
+    `Example ${i+1}:\nTicket: "${ex.ticket}"\nOutput: ${JSON.stringify({tags:ex.tags,confidence:[0.95,0.82,0.70],reasoning:"Primary issue with supporting context."})}`
+  ).join("\n\n");
+
+  return `You are an expert support ticket classification system.
+
+Assign the TOP 3 most relevant tags from the taxonomy below. Learn the pattern from the examples.
+
+AVAILABLE TAGS:
+${ALL_TAGS.join(", ")}
+
+INSTRUCTIONS:
+- Select exactly 3 tags ranked by relevance (most relevant first)
+- Output ONLY valid JSON, no extra text, no markdown fences
+
+OUTPUT FORMAT:
+{"tags":["Tag1","Tag2","Tag3"],"confidence":[0.95,0.80,0.65],"reasoning":"One sentence."}
+
+── FEW-SHOT EXAMPLES ──
+${examples}
+───────────────────────
+
+Now classify:
+Ticket: """${ticket}"""
+Output:`;
+}
+
+async function callClaude(prompt, apiKey) {
+  const start = Date.now();
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 300,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || "API error");
+  }
+  const data = await res.json();
+  const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+  let raw = data.content[0].text.trim().replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(raw);
+  parsed.latency_s = elapsed;
+  return parsed;
+}
+
+// ── Render helpers ──────────────────────────────────────────────────────
+function renderCard(result, type, color) {
+  const labels = { zero: "Zero-Shot", few: "Few-Shot" };
+  const chips = result.tags.map((tag, i) => {
+    const conf = result.confidence[i] || 0;
+    const widthPct = Math.round(conf * 100);
+    return `
+      <div class="tag-item">
+        <div class="tag-meta">
+          <span class="tag-rank">#${i+1}</span>
+          <span class="tag-name rank-${i+1}">${tag}</span>
+          <span class="tag-conf">${(conf*100).toFixed(0)}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${widthPct}%"></div>
+        </div>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="result-card ${type}-card">
+      <div class="result-card-header">
+        <span class="strategy-label ${type}">${labels[type]}</span>
+        <span class="latency-badge">⏱ ${result.latency_s}s</span>
+      </div>
+      ${chips}
+      <div class="reasoning">💬 ${result.reasoning}</div>
+    </div>`;
+}
+
+function renderComparison(zeroRes, fewRes, trueTags) {
+  const allPredTags = [...new Set([...zeroRes.tags, ...fewRes.tags])];
+  const rows = allPredTags.map(tag => {
+    const zi = zeroRes.tags.indexOf(tag);
+    const fi = fewRes.tags.indexOf(tag);
+    const inTrue = trueTags && trueTags.includes(tag);
+    return `<tr>
+      <td>${inTrue ? '<span class="match-yes">✓</span> ' : ''}${tag}</td>
+      <td>${zi >= 0 ? `<span style="color:var(--zero)">#${zi+1} · ${(zeroRes.confidence[zi]*100).toFixed(0)}%</span>` : '<span class="match-no">—</span>'}</td>
+      <td>${fi >= 0 ? `<span style="color:var(--few)">#${fi+1} · ${(fewRes.confidence[fi]*100).toFixed(0)}%</span>` : '<span class="match-no">—</span>'}</td>
+      ${trueTags ? `<td class="${inTrue ? 'match-yes' : 'match-no'}">${inTrue ? '✓ Match' : '✗'}</td>` : ''}
+    </tr>`;
+  }).join("");
+
+  return `
+    <div class="compare-card">
+      <div class="compare-title">📊 Side-by-Side Comparison</div>
+      ${trueTags ? `<div class="true-tags"><span class="true-tag-label">Ground truth:</span>${trueTags.map(t=>`<span class="true-tag-chip">${t}</span>`).join('')}</div>` : ''}
+      <table>
+        <tr>
+          <th>Tag</th>
+          <th style="color:var(--zero)">🔹 Zero-Shot</th>
+          <th style="color:var(--few)">🔸 Few-Shot</th>
+          ${trueTags ? '<th>Correct?</th>' : ''}
+        </tr>
+        ${rows}
+      </table>
+    </div>`;
+}
+
+// ── Main runner ──────────────────────────────────────────────────────────
+async function runTagger() {
+  const ticket = document.getElementById("ticketInput").value.trim();
+  const apiKey = document.getElementById("apiKey").value.trim();
+  const btn = document.getElementById("runBtn");
+  const resultsEl = document.getElementById("results");
+
+  if (!ticket) { alert("Please enter a support ticket."); return; }
+  if (!apiKey) { alert("Please enter your Anthropic API key."); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Classifying…`;
+  resultsEl.innerHTML = `<div class="placeholder"><div class="icon">⏳</div>Calling Claude API…</div>`;
+
+  try {
+    const trueTags = TICKET_TAGS[ticket] || null;
+    let zeroRes = null, fewRes = null;
+
+    if (currentStrat === "zero" || currentStrat === "both") {
+      zeroRes = await callClaude(buildZeroShotPrompt(ticket), apiKey);
+    }
+    if (currentStrat === "few" || currentStrat === "both") {
+      fewRes = await callClaude(buildFewShotPrompt(ticket), apiKey);
+    }
+
+    let html = "";
+
+    if (currentStrat === "both") {
+      html += `<div class="results-grid">
+        ${renderCard(zeroRes, "zero")}
+        ${renderCard(fewRes, "few")}
+      </div>`;
+      html += renderComparison(zeroRes, fewRes, trueTags);
+    } else if (currentStrat === "zero") {
+      html += `<div class="results-grid single">${renderCard(zeroRes, "zero")}</div>`;
+      if (trueTags) html += `<div class="compare-card"><div class="true-tags"><span class="true-tag-label">Ground truth:</span>${trueTags.map(t=>`<span class="true-tag-chip">${t}</span>`).join('')}</div></div>`;
+    } else {
+      html += `<div class="results-grid single">${renderCard(fewRes, "few")}</div>`;
+      if (trueTags) html += `<div class="compare-card"><div class="true-tags"><span class="true-tag-label">Ground truth:</span>${trueTags.map(t=>`<span class="true-tag-chip">${t}</span>`).join('')}</div></div>`;
+    }
+
+    resultsEl.innerHTML = html;
+
+    // Animate progress bars
+    setTimeout(() => {
+      document.querySelectorAll(".progress-fill").forEach(el => {
+        const w = el.style.width;
+        el.style.width = "0";
+        requestAnimationFrame(() => { el.style.width = w; });
+      });
+    }, 50);
+
+  } catch (err) {
+    resultsEl.innerHTML = `<div class="error-msg">❌ <strong>Error:</strong> ${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>▶ Tag Ticket</span>`;
+  }
+}
+
+// Allow Enter+Ctrl to submit
+document.getElementById("ticketInput").addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runTagger();
+});
+</script>
+</body>
+</html>
